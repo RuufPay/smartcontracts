@@ -1,3 +1,4 @@
 .infura
 .secret
 node_modules/
+build/

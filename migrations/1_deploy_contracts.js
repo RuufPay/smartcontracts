@@ -3,8 +3,6 @@ const RuufGovernanceToken = artifacts.require("./RuufGovernanceToken");
 const StakeFarm = artifacts.require("./StakeFarm");
 const StakeLPFarm = artifacts.require("./StakeLPFarm");
 
-const HackToken = artifacts.require("./HackToken.sol");
-
 async function doDeploy(deployer, network, accounts) {
 
   await deployer.deploy(HomeCoin);
@@ -21,10 +19,6 @@ async function doDeploy(deployer, network, accounts) {
   let stakeFarm = await StakeFarm.deployed();
   console.log('StakeFarm deployed:', stakeFarm.address);
 
-  await deployer.deploy(HackToken, homeCoin.address, stakeFarm.address);
-  let hackToken = await HackToken.deployed();
-  console.log('HackToken deployed:', hackToken.address);
-
   /*
   await deployer.deploy(StakeLPFarm, ruufGovernanceToken.address);
   let stakeLPFarm = await StakeLPFarm.deployed();
@@ -32,18 +26,6 @@ async function doDeploy(deployer, network, accounts) {
   */
 
   await homeCoin.transfer(stakeFarm.address, web3.utils.toWei('650000000'));
-  await homeCoin.transfer(hackToken.address, web3.utils.toWei('1000000'));
-
-  let x1 = await homeCoin.balanceOf(hackToken.address);
-  console.log('FUNDS1', x1.toString());
-  await homeCoin.approve(stakeFarm.address, web3.utils.toWei('1000000'));
-  await stakeFarm.stake(hackToken.address, web3.utils.toWei('1000000'));
-  let x2 = await homeCoin.balanceOf(hackToken.address);
-  console.log('FUNDS2', x2.toString());
-  let tx = await hackToken.drain();
-  let x3 = await homeCoin.balanceOf(hackToken.address);
-  console.log('FUNDS3', x3.toString());
-  console.log('TX', tx);
 
   // Just for debug the stake farm interest rate per month
   //await printCurve(stakeFarm);
