@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.3;
+pragma solidity 0.8.7;
 
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import "prb-math/contracts/PRBMathUD60x18.sol";
 
 contract StakeFarm {
     using PRBMathUD60x18 for uint256;
+    using SafeERC20 for IERC20;
 
     address immutable private homeToken;
     uint24 internal constant _SECONDS_IN_ONE_MONTH = 2592000;
@@ -21,7 +23,7 @@ contract StakeFarm {
 
     event HomeTokenStaked(address _user, uint _amount);
     event Withdraw(address _user, uint _homeAmount, uint _rewardsAmount);
-    event EmegercyWithdraw(address _user, uint _amount);
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
     constructor(address _homeToken) {
         homeToken = _homeToken;
@@ -39,12 +41,12 @@ contract StakeFarm {
                 rewards: 0
             });
         } else {
-            balances[_user].amount += _amount;
             balances[_user].rewards += _calculateRewards(_user);
             balances[_user].stakeDate = block.timestamp;
+            balances[_user].amount += _amount;
         }
 
-        IERC20(homeToken).transferFrom(msg.sender, address(this), _amount);
+        IERC20(homeToken).safeTransferFrom(msg.sender, address(this), _amount);
 
         emit HomeTokenStaked(_user, _amount);
     }
@@ -56,36 +58,28 @@ contract StakeFarm {
 
         delete balances[msg.sender];
 
-        IERC20(homeToken).transfer(msg.sender, homes + rewards);
+        IERC20(homeToken).safeTransfer(msg.sender, homes + rewards);
 
         emit Withdraw(msg.sender, homes, rewards);
     }
 
     function withdraw(address _user) external {
         require(msg.sender == owner, "BadOwner");
-        require(balances[msg.sender].stakeDate > 0, "NoStaked");
+        require(balances[_user].stakeDate > 0, "NoStaked");
         uint256 rewards = balances[_user].rewards + _calculateRewards(_user);
         uint256 homes = balances[_user].amount;
 
         delete balances[_user];
 
-        IERC20(homeToken).transfer(_user, homes + rewards);
+        IERC20(homeToken).safeTransfer(_user, homes + rewards);
 
         emit Withdraw(_user, homes, rewards);
-    }
-
-    function emergencyWithdraw() external {
-        require(msg.sender == owner, "BadOwner");
-        
-        uint256 balance = IERC20(homeToken).balanceOf(address(this));
-        IERC20(homeToken).transfer(owner, balance);
-
-        emit EmegercyWithdraw(owner, balance);
     }
 
     function changeOwner(address _owner) external {
         require(msg.sender == owner, "BadOwner");
         owner = _owner;
+        emit OwnershipTransferred(msg.sender, _owner);
     }
 
     function getUserData(address _user) external view returns(uint256 homeTokens, uint256 pendingRewards, uint256 stakeDate, uint256 multiplier) {
@@ -110,7 +104,7 @@ contract StakeFarm {
             multiplier = eight.div(100).mul(secondsToCalculate.pow(one.div(3)));
             if (multiplier > 250000000000000000) multiplier = 250000000000000000;   // No more than 25% interest rate
         } else {
-            uint256 maxOneMonth = 80000000000000000;    // Max for first month 8% interest
+            uint256 maxOneMonth = 80000000000000000;
             uint256 secondsToCalculate = block.timestamp - _stakeDate;
             multiplier = secondsToCalculate.mul(maxOneMonth).div(_SECONDS_IN_ONE_MONTH);
         }
