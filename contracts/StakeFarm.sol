@@ -108,11 +108,5 @@ contract StakeFarm {
             uint256 secondsToCalculate = block.timestamp - _stakeDate;
             multiplier = secondsToCalculate.mul(maxOneMonth).div(_SECONDS_IN_ONE_MONTH);
         }
-
-        assembly {
-            let delta := mul(multiplier, 20)
-            delta := div(delta, 100)
-            multiplier := sub(multiplier, delta)
-        }
     }
 }
