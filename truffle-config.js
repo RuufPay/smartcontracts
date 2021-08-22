@@ -59,8 +59,8 @@ module.exports = {
       provider: () => new HDWalletProvider(mnemonic, `wss://mainnet.infura.io/ws/v3/${infura}`),
       network_id: 1,       // Ropsten's id
       skipDryRun: false,     // Skip dry run before migrations? (default: false for public nets )
-      gas: 1500000,
-      gasPrice: 10000000000,  // TODO --> CHANGE WITH THE REAL GAS PRICE
+      gas: 5000000,
+      gasPrice: 50000000000,  // TODO --> CHANGE WITH THE REAL GAS PRICE
       websockets: true
     },
   },
