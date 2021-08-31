@@ -12,6 +12,7 @@
   "dependencies": {
     "@openzeppelin/contracts": "^4.1.0",
     "@truffle/hdwallet-provider": "^1.2.3",
-    "prb-math": "^1.1.0"
+    "prb-math": "^1.1.0",
+    "truffle-plugin-verify": "^0.5.12"
   }
 }
