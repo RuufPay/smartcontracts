@@ -60,7 +60,7 @@ module.exports = {
       network_id: 1,       // Ropsten's id
       skipDryRun: false,     // Skip dry run before migrations? (default: false for public nets )
       gas: 5000000,
-      gasPrice: 50000000000,  // TODO --> CHANGE WITH THE REAL GAS PRICE
+      gasPrice: 140000000000,  // TODO --> CHANGE WITH THE REAL GAS PRICE
       websockets: true
     },
   },
@@ -88,8 +88,8 @@ module.exports = {
     'truffle-plugin-verify'
   ],
   api_keys: {
-    etherscan: ''
-  }
+    etherscan: '6RNAMPQIQ1HZ6IKX33CURU4VS3H1IKKMN3'
+  },
 
   // Truffle DB is currently disabled by default; to enable it, change enabled: false to enabled: true
   //
