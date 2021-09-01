@@ -50,7 +50,7 @@ module.exports = {
      rinkeby: {
       provider: () => new HDWalletProvider(mnemonic, `wss://rinkeby.infura.io/ws/v3/${infura}`),
       network_id: 4,       // Ropsten's id
-      skipDryRun: false,     // Skip dry run before migrations? (default: false for public nets )
+      skipDryRun: true,     // Skip dry run before migrations? (default: false for public nets )
       gas: 5000000,
       gasPrice: 20000000000,
       websockets: true
@@ -58,7 +58,7 @@ module.exports = {
     mainnet: {
       provider: () => new HDWalletProvider(mnemonic, `wss://mainnet.infura.io/ws/v3/${infura}`),
       network_id: 1,       // Ropsten's id
-      skipDryRun: false,     // Skip dry run before migrations? (default: false for public nets )
+      skipDryRun: true,     // Skip dry run before migrations? (default: false for public nets )
       gas: 5000000,
       gasPrice: 140000000000,  // TODO --> CHANGE WITH THE REAL GAS PRICE
       websockets: true
