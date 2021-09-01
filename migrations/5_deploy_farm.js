@@ -3,7 +3,7 @@ const StakeFarm = artifacts.require("./StakeFarm");
 
 async function doDeploy(deployer, network, accounts) {
 
-  console.log('Deployer account', acouunts[0]);
+  console.log('Deployer account', accounts[0]);
 
   let homeCoin = await HomeCoin.at('0x3460fcA73f770932eA9FF80c2D3AfA2A6ab4a18e');
   console.log(homeCoin.address);
