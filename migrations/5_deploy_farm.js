@@ -5,7 +5,7 @@ async function doDeploy(deployer, network, accounts) {
 
   console.log('Deployer account', accounts[0]);
 
-  let homeCoin = await HomeCoin.at('0x3460fcA73f770932eA9FF80c2D3AfA2A6ab4a18e');
+  let homeCoin = await HomeCoin.at('0xAF585c15daB8C363087c572758AC75E82C467579');
   console.log(homeCoin.address);
   
   await deployer.deploy(StakeFarm, homeCoin.address);
