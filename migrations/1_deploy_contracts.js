@@ -1,34 +1,24 @@
-const HomeCoin = artifacts.require("./HomeCoin");
-const RuufGovernanceToken = artifacts.require("./RuufGovernanceToken");
+const RuufCoin = artifacts.require("./RuufCoin");
 const StakeFarm = artifacts.require("./StakeFarm");
-const StakeLPFarm = artifacts.require("./StakeLPFarm");
+const Airdrop = artifacts.require("./Airdrop");
 
 async function doDeploy(deployer, network, accounts) {
 
-  await deployer.deploy(HomeCoin);
-  let homeCoin = await HomeCoin.deployed();
-  console.log('HomeCoin deployed:', homeCoin.address);
+  await deployer.deploy(RuufCoin);
+  let ruufCoin = await RuufCoin.deployed();
+  console.log('RuufCoin deployed:', ruufCoin.address);
 
-  /*
-  await deployer.deploy(RuufGovernanceToken);
-  let ruufGovernanceToken = await RuufGovernanceToken.deployed();
-  console.log('RuufGovernanceToken deployed:', ruufGovernanceToken.address);
-  */
-
-  await deployer.deploy(StakeFarm, homeCoin.address);
+  await deployer.deploy(StakeFarm, ruufCoin.address);
   let stakeFarm = await StakeFarm.deployed();
   console.log('StakeFarm deployed:', stakeFarm.address);
 
-  /*
-  await deployer.deploy(StakeLPFarm, ruufGovernanceToken.address);
-  let stakeLPFarm = await StakeLPFarm.deployed();
-  console.log('StakeLPFarm deployed:', stakeLPFarm.address);
-  */
+  await ruufCoin.transfer(stakeFarm.address, web3.utils.toWei('5000000'));
 
-  await homeCoin.transfer(stakeFarm.address, web3.utils.toWei('650000000'));
+  await deployer.deploy(Airdrop, ruufCoin.address);
+  let airdrop = await Airdrop.deployed();
+  console.log('Airdrop deployed:', airdrop.address);
 
-  // Just for debug the stake farm interest rate per month
-  //await printCurve(stakeFarm);
+  await ruufCoin.transfer(airdrop.address, web3.utils.toWei('200000000'));
 }
 
 async function printCurve(stakeFarm) {

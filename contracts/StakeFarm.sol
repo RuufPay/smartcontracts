@@ -10,24 +10,54 @@ contract StakeFarm {
     using SafeERC20 for IERC20;
 
     address immutable private homeToken;
-    uint24 internal constant _SECONDS_IN_ONE_MONTH = 2592000;
     address private owner;
+    bool private initialStakeDone;
+
+    uint24 internal constant _SECONDS_IN_ONE_MONTH = 2592000;
 
     struct UserStake {
-        uint amount;
-        uint stakeDate;
-        uint rewards;
+        uint256 amount;
+        uint256 rewards;
+        uint64 stakeDate;
+        uint16 extraRewards;
     }
 
     mapping(address => UserStake) private balances;
 
-    event HomeTokenStaked(address _user, uint _amount);
+    event HomeTokenStaked(address _user, uint _amount, uint _date);
     event Withdraw(address _user, uint _homeAmount, uint _rewardsAmount);
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
     constructor(address _homeToken) {
         homeToken = _homeToken;
         owner = msg.sender;
+    }
+
+    function migrateInitialStake(address[] calldata _users, uint256[] calldata _amounts, uint64[] calldata _dates) external {
+        require(msg.sender == owner, "OnlyOwner");
+        require(initialStakeDone == false, "OnlyOnce");
+        require(_users.length == _amounts.length, "BadLengths");
+        require(_amounts.length == _dates.length, "BadLengths");
+
+        for (uint256 i=0; i<_users.length; i++) {
+            balances[_users[i]] = UserStake({
+                amount: _amounts[i],
+                stakeDate: _dates[i],
+                rewards: 0,
+                extraRewards: 1
+            });
+
+            emit HomeTokenStaked(_users[i], _amounts[i], _dates[i]);
+        }
+
+        initialStakeDone = true;
+    }
+
+    function addStakeExtraType(address _user, uint16 _extraRewards) external {
+        require(msg.sender == owner, "OnlyOwner");
+        require(balances[_user].amount > 0, "NoStaked");
+
+        balances[_user].extraRewards = _extraRewards;
     }
 
     function stake(address _user, uint _amount) external {
@@ -37,18 +67,19 @@ contract StakeFarm {
         if (balances[_user].amount == 0) {
             balances[_user] = UserStake({
                 amount: _amount,
-                stakeDate: block.timestamp,
-                rewards: 0
+                stakeDate: uint64(block.timestamp),
+                rewards: 0,
+                extraRewards: 0
             });
         } else {
             balances[_user].rewards += _calculateRewards(_user);
-            balances[_user].stakeDate = block.timestamp;
+            balances[_user].stakeDate = uint64(block.timestamp);
             balances[_user].amount += _amount;
         }
 
         IERC20(homeToken).safeTransferFrom(msg.sender, address(this), _amount);
 
-        emit HomeTokenStaked(_user, _amount);
+        emit HomeTokenStaked(_user, _amount, block.timestamp);
     }
 
     function withdraw() external {
@@ -91,7 +122,7 @@ contract StakeFarm {
 
     function _calculateRewards(address _user) internal view returns(uint256) {
         uint256 amount = balances[_user].amount;
-        uint256 multiplier = _calculateMultiplier(balances[_user].stakeDate);
+        uint256 multiplier = _calculateMultiplier(balances[_user].stakeDate) + (balances[_user].extraRewards * 10000000000000000);
 
         return amount.mul(multiplier);
     }

@@ -51,15 +51,24 @@ module.exports = {
       provider: () => new HDWalletProvider(mnemonic, `wss://rinkeby.infura.io/ws/v3/${infura}`),
       network_id: 4,       // Ropsten's id
       skipDryRun: true,     // Skip dry run before migrations? (default: false for public nets )
-      gas: 5000000,
-      gasPrice: 20000000000,
+      gas: 2000000,
+      gasPrice: 140000000000,
       websockets: true
+    },
+    matic: {
+      //`https://polygon-mainnet.infura.io/v3/${infura}`
+      provider: () => new HDWalletProvider(mnemonic, 'https://rpc-mainnet.maticvigil.com/v1/73b090d6405a8daa5b8cf503d791aaa050fc0216'),
+      network_id: 137,
+      confirmations: 2,
+      timeoutBlocks: 200,
+      skipDryRun: true,
+      networkCheckTimeout: 100000
     },
     mainnet: {
       provider: () => new HDWalletProvider(mnemonic, `wss://mainnet.infura.io/ws/v3/${infura}`),
       network_id: 1,       // Ropsten's id
       skipDryRun: true,     // Skip dry run before migrations? (default: false for public nets )
-      gas: 5000000,
+      gas: 2000000,
       gasPrice: 140000000000,  // TODO --> CHANGE WITH THE REAL GAS PRICE
       websockets: true
     },
@@ -88,7 +97,8 @@ module.exports = {
     'truffle-plugin-verify'
   ],
   api_keys: {
-    etherscan: '6RNAMPQIQ1HZ6IKX33CURU4VS3H1IKKMN3'
+    etherscan: '6RNAMPQIQ1HZ6IKX33CURU4VS3H1IKKMN3',
+    polygonscan: 'Z73BEDSV237WN16B2HUA1C3462AS8PFFME'
   },
 
   // Truffle DB is currently disabled by default; to enable it, change enabled: false to enabled: true
