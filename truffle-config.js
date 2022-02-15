@@ -45,7 +45,7 @@ module.exports = {
       host: "127.0.0.1",        // Localhost (default: none)
       port: 7545,               // Ganache Ethereum port (default: none)
       network_id: "*",          // Any network (default: none)
-      gasPrice: 20000000000,  // 200 gwei (in wei) (default: 100 gwei)
+
      },
      rinkeby: {
       provider: () => new HDWalletProvider(mnemonic, `wss://rinkeby.infura.io/ws/v3/${infura}`),
@@ -56,13 +56,16 @@ module.exports = {
       websockets: true
     },
     matic: {
-      //`https://polygon-mainnet.infura.io/v3/${infura}`
-      provider: () => new HDWalletProvider(mnemonic, 'https://rpc-mainnet.maticvigil.com/v1/73b090d6405a8daa5b8cf503d791aaa050fc0216'),
+      // 'https://rpc-mainnet.maticvigil.com/v1/0f501f15bee2a41c6fd686a1742e8ca470aae51b'
+      // 'https://speedy-nodes-nyc.moralis.io/9ac62599d1426bc32209aa4b/polygon/mainnet
+      // `https://polygon-mainnet.infura.io/v3/${infura}`
+      provider: () => new HDWalletProvider(mnemonic, 'https://rpc-mainnet.maticvigil.com/v1/0f501f15bee2a41c6fd686a1742e8ca470aae51b'),
       network_id: 137,
       confirmations: 2,
       timeoutBlocks: 200,
       skipDryRun: true,
-      networkCheckTimeout: 100000
+      gasPrice: 60000000000,
+      //networkCheckTimeout: 100000
     },
     mainnet: {
       provider: () => new HDWalletProvider(mnemonic, `wss://mainnet.infura.io/ws/v3/${infura}`),
