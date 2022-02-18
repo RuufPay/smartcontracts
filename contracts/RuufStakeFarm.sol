@@ -12,7 +12,6 @@ contract RuufStakeFarm {
 
     struct UserStake {
         uint256 amount;
-        uint256 rewards;
         uint64 stakeDate;
         uint16 months;
     }
@@ -47,7 +46,6 @@ contract RuufStakeFarm {
         balances[_user] = UserStake({
             amount: _amount,
             stakeDate: uint64(block.timestamp),
-            rewards: 0,
             months: _months
         });
 
@@ -85,7 +83,7 @@ contract RuufStakeFarm {
         require(balances[_user].stakeDate > 0, "NoStaked");
 
         uint256 stakeDate = balances[_user].stakeDate;
-        uint256 rewards = balances[_user].rewards + _calculateRewards(_user);
+        uint256 rewards = _calculateRewards(_user);
         uint256 amount = balances[_user].amount;
         uint256 months = balances[_user].months;
         delete balances[_user];
@@ -110,12 +108,17 @@ contract RuufStakeFarm {
         emit OwnershipTransferred(msg.sender, _owner);
     }
 
-    function getUserData(address _user) external view returns(uint256 homeTokens, uint256 pendingRewards, uint256 stakeDate, uint256 multiplier, uint16 months) {
+    function getUserData(address _user) external view returns(uint256 homeTokens, uint256 stakeDate, uint256 pendingRewards, uint256 multiplier, uint16 months, uint256 untilRewards, uint16 finalIr) {
         homeTokens = balances[_user].amount;
-        pendingRewards = balances[_user].rewards + _calculateRewards(_user);
         stakeDate = balances[_user].stakeDate;
+        pendingRewards = _calculateRewards(_user);
         months = balances[_user].months;
         multiplier = _calculateMultiplier(stakeDate, months);
+        untilRewards = (stakeDate + (months * 30 days)) - block.timestamp;
+        if (months == 3) finalIr = ir[0];
+        else if (months == 6) finalIr = ir[0] + ir[1];
+        else if (months == 9) finalIr = ir[0] + ir[1] + ir[2];
+        else if (months == 12) finalIr = ir[0] + ir[1] + ir[2] + ir[3];
     }
 
     function _calculateRewards(address _user) internal view returns(uint256) {
@@ -128,10 +131,9 @@ contract RuufStakeFarm {
 
     function _calculateMultiplier(uint256 _stakeDate, uint16 _months) internal view returns(uint256 multiplier) {
         uint256 stakedMonths = (block.timestamp - _stakeDate) / 30 days;
-        multiplier = 0;
         if (stakedMonths >= 3 && _months == 3) multiplier = ir[0];
-        else if (stakedMonths >= 6 && _months == 6) multiplier = ir[1];
-        else if (stakedMonths >= 9 && _months == 9) multiplier = ir[2];
-        else if (stakedMonths >= 12 && _months == 12) multiplier = ir[3];
+        else if (stakedMonths >= 6 && _months == 6) multiplier = ir[0] + ir[1];
+        else if (stakedMonths >= 9 && _months == 9) multiplier = ir[0] + ir[1] + ir[2];
+        else if (stakedMonths >= 12 && _months == 12) multiplier = ir[0] + ir[1] + ir[2] + ir[3];
     }
 }
