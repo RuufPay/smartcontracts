@@ -56,10 +56,12 @@ async function doDeploy(deployer, network, accounts) {
     let stakeFarm = await RuufStakeFarm.deployed();
     console.log('RuufStakeFarm deployed:', stakeFarm.address);
 
-    await token.transfer(accounts[1], web3.utils.toWei('1000000'));
+    //await token.transfer(accounts[1], web3.utils.toWei('1000000'));
 
-    await token.approve(stakeFarm.address, web3.utils.toWei('1000000'), {from: accounts[1]});
-    await stakeFarm.stake(accounts[1], web3.utils.toWei('1000000'), 9, {from: accounts[1]});
+    await token.approve(stakeFarm.address, web3.utils.toWei('1000000'), {from: accounts[0]});
+
+    await stakeFarm.stake(accounts[0], web3.utils.toWei('100000'), 3, {from: accounts[0]});
+    //await stakeFarm.withdraw({from: accounts[0]});
 
     let now = 1645656200;   // 2022/02/24 00:00:00
     for (let i=0; i<365; i++) { // 365 days loop
@@ -67,11 +69,20 @@ async function doDeploy(deployer, network, accounts) {
         await increaseTo(now);
         try {
             console.log(i);
-            if (i == 300) {
-                console.log('WITHDRAW');
-                await stakeFarm.withdraw({from: accounts[1]});
+            if (i == 100) {
+                const userData = await stakeFarm.getUserData(accounts[0]);
+                console.log('homeTokens',web3.utils.fromWei(userData.homeTokens,'ether'));
+                console.log('stakeDate',userData.stakeDate.toString());
+                console.log('pendingRewards',web3.utils.fromWei(userData.pendingRewards,'ether'));
+                console.log('multiplier',userData.multiplier.toString());
+                console.log('months',userData.months.toString());
+                console.log('untilRewards',userData.untilRewards.toString());
+                console.log('finalIr',userData.finalIr.toString());
 
-                let balance2 = await token.balanceOf(accounts[1]);
+                console.log('WITHDRAW');
+                await stakeFarm.withdraw({from: accounts[0]});
+
+                let balance2 = await token.balanceOf(accounts[0]);
                 console.log(web3.utils.fromWei(balance2,"ether"));
                 break;
             }

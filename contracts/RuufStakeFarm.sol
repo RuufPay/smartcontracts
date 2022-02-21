@@ -108,13 +108,13 @@ contract RuufStakeFarm {
         emit OwnershipTransferred(msg.sender, _owner);
     }
 
-    function getUserData(address _user) external view returns(uint256 homeTokens, uint256 stakeDate, uint256 pendingRewards, uint256 multiplier, uint16 months, uint256 untilRewards, uint16 finalIr) {
+    function getUserData(address _user) external view returns(uint256 homeTokens, uint256 stakeDate, uint256 pendingRewards, uint256 multiplier, uint16 months, int256 untilRewards, uint16 finalIr) {
         homeTokens = balances[_user].amount;
         stakeDate = balances[_user].stakeDate;
         pendingRewards = _calculateRewards(_user);
         months = balances[_user].months;
         multiplier = _calculateMultiplier(stakeDate, months);
-        untilRewards = (stakeDate + (months * 30 days)) - block.timestamp;
+        untilRewards = int256(stakeDate + (months * 30 days)) - int256(block.timestamp);
         if (months == 3) finalIr = ir[0];
         else if (months == 6) finalIr = ir[0] + ir[1];
         else if (months == 9) finalIr = ir[0] + ir[1] + ir[2];
