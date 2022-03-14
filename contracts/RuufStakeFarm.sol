@@ -13,7 +13,7 @@ contract RuufStakeFarm {
     struct UserStake {
         uint256 amount;
         uint64 stakeDate;
-        uint16 months;
+        uint64 months;
     }
 
     mapping(address => UserStake) private balances;
@@ -22,28 +22,32 @@ contract RuufStakeFarm {
     uint16[4] public ir = [200,400,500,732];
     uint256[4] public maxStakes = [30000000*10**18,60000000*10**18,120000000*10**18,240000000*10**18];
 
-    event HomeTokenStaked(address _user, uint _amount, uint _date);
-    event WithdrawWithRewards(address _user, uint _homeAmount, uint _rewardsAmount);
-    event WithdrawWithoutRewards(address _user, uint _homeAmount);
+    event HomeTokenStaked(address indexed _user, uint _amount, uint _date);
+    event WithdrawWithRewards(address indexed _user, uint _homeAmount, uint _rewardsAmount);
+    event WithdrawWithoutRewards(address indexed _user, uint _homeAmount);
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    event IrChanged(uint256 _index, uint16 _ir);
+    event MaxStakesChanged(uint256 _index, uint256 _maxStake);
 
     constructor(address _homeToken) {
+        require(_homeToken != address(0), "NullAddress");
+
         homeToken = _homeToken;
         owner = msg.sender;
     }
 
-    function stake(address _user, uint256 _amount, uint16 _months) external {
+    function stake(uint256 _amount, uint64 _months) external {
         require(_amount > 0, "InvalidAmount");
         require(_months == 3 || _months == 6 || _months == 9 || _months == 12, "InvalidMonths");
         require(IERC20(homeToken).balanceOf(msg.sender) >= _amount, "NoEnoughTokens");
-        require(balances[_user].amount == 0, "UserAlreadyStaked");
+        require(balances[msg.sender].amount == 0, "UserAlreadyStaked");
 
         if (_months == 3) require(totalTokensStaked[0] + _amount <= maxStakes[0], "MaxLimitReached3Months");
         else if (_months == 6) require(totalTokensStaked[1] + _amount <= maxStakes[1], "MaxLimitReached6Months");
         else if (_months == 9) require(totalTokensStaked[2] + _amount <= maxStakes[2], "MaxLimitReached9Months");
         else if (_months == 12) require(totalTokensStaked[3] + _amount <= maxStakes[3], "MaxLimitReached12Months");
 
-        balances[_user] = UserStake({
+        balances[msg.sender] = UserStake({
             amount: _amount,
             stakeDate: uint64(block.timestamp),
             months: _months
@@ -55,31 +59,27 @@ contract RuufStakeFarm {
         else if (_months == 9) totalTokensStaked[2] += _amount;
         else if (_months == 12) totalTokensStaked[3] += _amount;
 
-        emit HomeTokenStaked(_user, _amount, block.timestamp);
+        emit HomeTokenStaked(msg.sender, _amount, block.timestamp);
     }
 
     function changeIr(uint256 _index, uint16 _ir) external {
         require(msg.sender == owner, "BadOwner");
         require(_index >= 0 && _index <= 3, "BadIndex");
         ir[_index] = _ir;
+
+        emit IrChanged(_index, _ir);
     }
 
-    function changeMaxStakes(uint256 _index, uint16 _maxStake) external {
+    function changeMaxStakes(uint256 _index, uint256 _maxStake) external {
         require(msg.sender == owner, "BadOwner");
         require(_index >= 0 && _index <= 3, "BadIndex");
         maxStakes[_index] = _maxStake;
-    }
 
-    function withdraw() external {
-        _withdraw(msg.sender);
+        emit MaxStakesChanged(_index, _maxStake);
     }
 
     function withdraw(address _user) external {
-        require(msg.sender == owner, "BadOwner");
-        _withdraw(_user);
-    }
-
-    function _withdraw(address _user) internal {
+        if (msg.sender != _user) require(msg.sender == owner, "BadOwner");
         require(balances[_user].stakeDate > 0, "NoStaked");
 
         uint256 stakeDate = balances[_user].stakeDate;
@@ -104,17 +104,20 @@ contract RuufStakeFarm {
 
     function changeOwner(address _owner) external {
         require(msg.sender == owner, "BadOwner");
+        require(_owner != address(0), "NotNullAllowed");
+        
         owner = _owner;
         emit OwnershipTransferred(msg.sender, _owner);
     }
 
-    function getUserData(address _user) external view returns(uint256 homeTokens, uint256 stakeDate, uint256 pendingRewards, uint256 multiplier, uint16 months, int256 untilRewards, uint16 finalIr) {
+    function getUserData(address _user) external view returns(uint256 homeTokens, uint256 stakeDate, uint256 pendingRewards, uint256 multiplier, uint64 months, int256 untilRewards, uint16 finalIr) {
         homeTokens = balances[_user].amount;
         stakeDate = balances[_user].stakeDate;
         pendingRewards = _calculateRewards(_user);
         months = balances[_user].months;
         multiplier = _calculateMultiplier(stakeDate, months);
-        untilRewards = int256(stakeDate + (months * 30 days)) - int256(block.timestamp);
+        if (block.timestamp >= uint256(stakeDate + (months * 30 days))) untilRewards = 0;
+        else untilRewards = int256(stakeDate + (months * 30 days)) - int256(block.timestamp);
         if (months == 3) finalIr = ir[0];
         else if (months == 6) finalIr = ir[0] + ir[1];
         else if (months == 9) finalIr = ir[0] + ir[1] + ir[2];
@@ -123,13 +126,13 @@ contract RuufStakeFarm {
 
     function _calculateRewards(address _user) internal view returns(uint256) {
         uint256 amount = balances[_user].amount;
-        uint16 months = balances[_user].months;
+        uint64 months = balances[_user].months;
         uint256 multiplier = _calculateMultiplier(balances[_user].stakeDate, months);
 
         return amount * multiplier / 10000;
     }
 
-    function _calculateMultiplier(uint256 _stakeDate, uint16 _months) internal view returns(uint256 multiplier) {
+    function _calculateMultiplier(uint256 _stakeDate, uint64 _months) internal view returns(uint256 multiplier) {
         uint256 stakedMonths = (block.timestamp - _stakeDate) / 30 days;
         if (stakedMonths >= 3 && _months == 3) multiplier = ir[0];
         else if (stakedMonths >= 6 && _months == 6) multiplier = ir[0] + ir[1];

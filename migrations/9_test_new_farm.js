@@ -60,16 +60,16 @@ async function doDeploy(deployer, network, accounts) {
 
     await token.approve(stakeFarm.address, web3.utils.toWei('1000000'), {from: accounts[0]});
 
-    await stakeFarm.stake(accounts[0], web3.utils.toWei('100000'), 3, {from: accounts[0]});
+    await stakeFarm.stake(web3.utils.toWei('100000'), 9, {from: accounts[0]});
     //await stakeFarm.withdraw({from: accounts[0]});
 
-    let now = 1645656200;   // 2022/02/24 00:00:00
+    let now = 1647352974;   // 2022/03/14 00:00:00
     for (let i=0; i<365; i++) { // 365 days loop
         console.log('Test datetime: ', new Date(now * 1000).toISOString());
         await increaseTo(now);
         try {
             console.log(i);
-            if (i == 100) {
+            if (i == 300) {
                 const userData = await stakeFarm.getUserData(accounts[0]);
                 console.log('homeTokens',web3.utils.fromWei(userData.homeTokens,'ether'));
                 console.log('stakeDate',userData.stakeDate.toString());
@@ -80,7 +80,7 @@ async function doDeploy(deployer, network, accounts) {
                 console.log('finalIr',userData.finalIr.toString());
 
                 console.log('WITHDRAW');
-                await stakeFarm.withdraw({from: accounts[0]});
+                await stakeFarm.withdraw(accounts[0]);
 
                 let balance2 = await token.balanceOf(accounts[0]);
                 console.log(web3.utils.fromWei(balance2,"ether"));
