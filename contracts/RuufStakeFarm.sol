@@ -9,6 +9,7 @@ contract RuufStakeFarm {
 
     address immutable private homeToken;
     address public owner;
+    address private ownerPendingClaim;
 
     struct UserStake {
         uint256 amount;
@@ -25,6 +26,7 @@ contract RuufStakeFarm {
     event HomeTokenStaked(address indexed _user, uint _amount, uint _date);
     event WithdrawWithRewards(address indexed _user, uint _homeAmount, uint _rewardsAmount);
     event WithdrawWithoutRewards(address indexed _user, uint _homeAmount);
+    event NewOwnershipProposed(address indexed previousOwner, address indexed newOwner);
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
     event IrChanged(uint256 _index, uint16 _ir);
     event MaxStakesChanged(uint256 _index, uint256 _maxStake);
@@ -102,12 +104,21 @@ contract RuufStakeFarm {
         }
     }
 
-    function changeOwner(address _owner) external {
+    function proposeChangeOwner(address _owner) external {
         require(msg.sender == owner, "BadOwner");
         require(_owner != address(0), "NotNullAllowed");
         
-        owner = _owner;
-        emit OwnershipTransferred(msg.sender, _owner);
+        ownerPendingClaim = _owner;
+        emit NewOwnershipProposed(msg.sender, _owner);
+    }
+
+    function claimOwnership() external {
+        require(msg.sender == ownerPendingClaim, "OnlyProposedOwner");
+
+        address oldOwner = owner;
+        owner = ownerPendingClaim;
+        ownerPendingClaim = address(0);
+        emit OwnershipTransferred(oldOwner, owner);
     }
 
     function getUserData(address _user) external view returns(uint256 homeTokens, uint256 stakeDate, uint256 pendingRewards, uint256 multiplier, uint64 months, int256 untilRewards, uint16 finalIr) {
