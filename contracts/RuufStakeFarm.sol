@@ -50,7 +50,7 @@ contract RuufStakeFarm {
         else if (_months == 9) index = 2;
         else if (_months == 12) index = 3;
 
-        require(totalTokensStaked[index] + _amount <= maxStakes[0], "MaxLimitMonthsReached");
+        require(totalTokensStaked[index] + _amount <= maxStakes[index], "MaxLimitMonthsReached");
 
         balances[msg.sender] = UserStake({
             amount: _amount,
